@@ -43,7 +43,12 @@ end
 NULL_PLACEHOLDER = "$%&?"; % Should have 4 characters for correct line breaks.
 
 initSnakeYaml
-import org.yaml.snakeyaml.*;
+import org.snakeyaml.engine.v2.api.*;
+import org.snakeyaml.engine.v2.common.*;
+
+java_settingsBuilder = DumpSettings.builder();
+java_settingsBuilder.setDefaultFlowStyle(FlowStyle.(upper(style)));
+java_dump = Dump(java_settingsBuilder.build);
 
 try
     javaData = convert(data);
@@ -53,9 +58,7 @@ catch exception
     end
     exception.rethrow;
 end
-dumperOptions = DumperOptions();
-setFlowStyle(dumperOptions, style);
-result = Yaml(dumperOptions).dump(javaData);
+result = java_dump.dumpToString(javaData);
 result = string(result).replace(NULL_PLACEHOLDER, "null");
 
     function result = convert(data)
@@ -128,32 +131,6 @@ result = string(result).replace(NULL_PLACEHOLDER, "null");
         else
             error("yaml:dump:HigherDimensionsNotSupported", "Arrays with more than three dimensions are not supported. Use nested cells instead.")
         end
-    end
-
-    function initSnakeYaml
-        snakeYamlFile = fullfile(fileparts(mfilename('fullpath')), 'snakeyaml', 'snakeyaml-1.30.jar');
-        if ~ismember(snakeYamlFile, javaclasspath('-dynamic'))
-            javaaddpath(snakeYamlFile);
-        end
-    end
-
-    function setFlowStyle(options, style)
-        import org.yaml.snakeyaml.*;
-        if style == "auto"
-            return
-        end
-        classes = options.getClass.getClasses;
-        classNames = arrayfun(@(c) string(c.getName), classes);
-        styleClassIndex = find(classNames.endsWith("$FlowStyle"), 1);
-        if isempty(styleClassIndex)
-            error("yaml:dump:FlowStyleSelectionFailed", "Unable to select flow style '%s'.", style);
-        end
-        styleFields = classes(styleClassIndex).getDeclaredFields();
-        styleIndex = find(arrayfun(@(f) string(f.getName).lower == style, styleFields));
-        if isempty(styleIndex)
-            error("yaml:dump:FlowStyleSelectionFailed", "Unable to select flow style '%s'.", style);
-        end
-        options.setDefaultFlowStyle(styleFields(styleIndex).get([]));
     end
 
 end

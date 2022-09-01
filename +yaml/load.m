@@ -37,9 +37,13 @@ arguments
 end
 
 initSnakeYaml
-import org.yaml.snakeyaml.*;
+import org.snakeyaml.engine.v2.api.*;
+
+settings = LoadSettings.builder().setLabel("Custom user configuration").build();
+load = Load(settings);
+
 try
-    rootNode = Yaml().load(s);
+    rootNode = load.loadFromString(s);
 catch cause
     MException("yaml:load:Failed", "Failed to load YAML string.").addCause(cause).throw
 end
@@ -113,13 +117,6 @@ end
             result = vertcat(result{:});
         end
     end
-end
-
-function initSnakeYaml
-snakeYamlFile = fullfile(fileparts(mfilename('fullpath')), 'snakeyaml', 'snakeyaml-1.30.jar');
-if ~ismember(snakeYamlFile, javaclasspath('-dynamic'))
-    javaaddpath(snakeYamlFile);
-end
 end
 
 function result = elementsHaveConsistentType(c)
